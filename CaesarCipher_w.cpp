@@ -488,59 +488,6 @@ std::wstring CaesarCipherW::SmartDecryptW(const std::wstring& wtext) const {
     }
 }
 
-//// Умная дешифровка с определением языка
-//std::wstring CaesarCipherW::SmartDecryptW(const std::wstring& wtext) const {
-//    // Если текст очень короткий (< 3 символов), используем английский
-//    if (wtext.length() < 3) {
-//        return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
-//    }
-//
-//    // Простой и надежный детектор языка
-//    std::string lang = "ENGLISH"; // По умолчанию
-//
-//    // Проверяем наличие специфических символов
-//    bool has_russian = (wtext.find_first_of(RU_LOW + RU_UP) != std::wstring::npos);
-//    bool has_german = (wtext.find_first_of(L"äöüßÄÖÜẞ") != std::wstring::npos);
-//    bool has_french = (wtext.find_first_of(L"àâæçéèêëîïôœûùÿÀÂÆÇÉÈÊËÎÏÔŒÛÙŸ") != std::wstring::npos);
-//
-//    // Приоритет: русский > немецкий > французский > английский
-//    if (has_russian) {
-//        lang = "RUSSIAN";
-//    }
-//    else if (has_german) {
-//        lang = "GERMAN";
-//    }
-//    else if (has_french) {
-//        lang = "FRENCH";
-//    }
-//    else {
-//        // Для текстов без специфических символов используем английский
-//        // или если текст очень короткий для частотного анализа
-//        if (wtext.length() < 50) {
-//            lang = "ENGLISH";
-//        }
-//        else {
-//            // Для длинных текстов без спецсимволов используем частотный анализ
-//            lang = DetectLanguage(wtext);
-//        }
-//    }
-//
-//    // Для каждого языка используем свой алфавит
-//    if (lang == "RUSSIAN") {
-//        return DecryptWithAlphabet(wtext, RU_LOW, RU_UP);
-//    }
-//    else if (lang == "GERMAN") {
-//        return DecryptWithAlphabet(wtext, DE_LOW, DE_UP);
-//    }
-//    else if (lang == "FRENCH") {
-//        return DecryptWithAlphabet(wtext, FR_LOW, FR_UP);
-//    }
-//    else {
-//        // Английский по умолчанию
-//        return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
-//    }
-//}
-
 std::wstring CaesarCipherW::EncryptW(const std::wstring& wtext) const {
     CaesarCipherW c(-shift);
     return c.SmartDecryptW(wtext);
@@ -1503,17 +1450,6 @@ void CaesarCipherW::CreateCompleteAnalysisHTML(const std::wstring& encrypted,
         // Prepare graph data
         const nodes = [)";
 
-    /*// Generate nodes data (vertices/letters)
-    auto allLetters = graphAnalyzer.getAllLetters();
-    bool firstNode = true;
-    for (wchar_t letter : allLetters) {
-        std::string utf8_char = wstring_to_utf8(std::wstring(1, letter));
-        if (!firstNode) html << ",";
-        firstNode = false;
-        html << R"(
-                { id: ')" << escape_js(utf8_char) << R"(', label: ')" << escape_js(utf8_char) << R"(' })";
-    }*/
-
     auto allLetters = graphAnalyzer.getAllLetters();
     bool firstNode = true;
     std::set<std::string> uniqueIds;
@@ -1548,37 +1484,6 @@ void CaesarCipherW::CreateCompleteAnalysisHTML(const std::wstring& encrypted,
     html << R"(];
         
         const edges = [)";
-
-    //// Generate edges data (bigrams) - БЕЗ ПРОЦЕНТОВ
-    //auto allBigrams = graphAnalyzer.getAllBigramsWithFrequencies();
-    //bool firstEdge = true;
-    //int edgeId = 0;
-    //for (const auto& [bigram, freq] : allBigrams) {
-    //    if (freq > 0.001) { // threshold
-    //        std::string from = wstring_to_utf8(std::wstring(1, bigram[0]));
-    //        std::string to = wstring_to_utf8(std::wstring(1, bigram[1]));
-
-    //        if (!firstEdge) html << ",";
-    //        firstEdge = false;
-
-    //        // Толщина ребра от частоты (1-5px)
-    //        double edgeWidth = 1.0 + (freq * 30.0);
-    //        if (edgeWidth > 5.0) edgeWidth = 5.0;
-    //        if (edgeWidth < 1.0) edgeWidth = 1.0;
-
-    //        html << R"(
-    //            { 
-    //                id: )" << edgeId++ << R"(, 
-    //                from: ')" << escape_js(from) << R"(', 
-    //                to: ')" << escape_js(to) << R"(', 
-    //                value: )" << freq << R"(,
-    //                width: )" << edgeWidth << R"(,
-    //                label: '',
-    //                title: 'Frequency: )" << std::fixed << std::setprecision(4) << freq << R"(',
-    //                color: { color: '#95a5a6', opacity: 0.7 }
-    //            })";
-    //    }
-    //}
 
     auto allBigrams = graphAnalyzer.getAllBigramsWithFrequencies();
     bool firstEdge = true;
@@ -1624,22 +1529,6 @@ void CaesarCipherW::CreateCompleteAnalysisHTML(const std::wstring& encrypted,
         // SCC компоненты для раскраски
         const sccComponents = [)";
 
-    // Generate SCC components
-    /*bool firstComponent = true;
-    for (const auto& component : sccs) {
-        if (!firstComponent) html << ",";
-        firstComponent = false;
-        html << R"( [)";
-
-        bool firstLetter = true;
-        for (wchar_t letter : component) {
-            std::string utf8_char = wstring_to_utf8(std::wstring(1, letter));
-            if (!firstLetter) html << ", ";
-            firstLetter = false;
-            html << "'" << escape_js(utf8_char) << "'";
-        }
-        html << "]";
-    }*/
     bool firstComp = true;
     for (const auto& component : sccs) {
         if (!firstComp) html << ",";
@@ -2417,151 +2306,3 @@ std::string CaesarCipherW::GetGraphAnalysisJSON(const std::wstring& text) const 
     json << "}";
     return json.str();
 }
-
-
-
-
-
-
-
-
-
-//// CaesarCipher_w.cpp — ВСЁ РАБОТАЕТ, НИКАКИХ ОШИБОК
-//#include "CaesarCipher_w.h"
-//#include <algorithm>
-//#include <cmath>
-//#include <map>
-//#include <cwctype>
-//
-//// Алфавиты
-//const std::wstring CaesarCipherW::EN_LOW = L"abcdefghijklmnopqrstuvwxyz";
-//const std::wstring CaesarCipherW::EN_UP = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-//const std::wstring CaesarCipherW::RU_LOW = L"абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
-//const std::wstring CaesarCipherW::RU_UP = L"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-//const std::wstring CaesarCipherW::DE_LOW = L"abcdefghijklmnopqrstuvwxyzäößü";
-//const std::wstring CaesarCipherW::DE_UP = L"ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖẞÜ";
-//const std::wstring CaesarCipherW::FR_LOW = L"abcdefghijklmnopqrstuvwxyzàâæçéèêëîïôœûùüÿ";
-//const std::wstring CaesarCipherW::FR_UP = L"ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÆÇÉÈÊËÎÏÔŒÛÙÜŸ";
-//
-//CaesarCipherW::CaesarCipherW(int shift) : shift(shift) {}
-//
-//static int mod_positive(int a, int m) {
-//    int r = a % m;
-//    if (r < 0) r += m;
-//    return r;
-//}
-//
-//wchar_t CaesarCipherW::ShiftInAlphabet(const std::wstring& alph, wchar_t ch, int s, bool encrypt) const {
-//    std::size_t pos = alph.find(ch);
-//    if (pos == std::wstring::npos) return ch;
-//    int n = static_cast<int>(alph.size());
-//    int delta = encrypt ? s : -s;
-//    int newPos = mod_positive(static_cast<int>(pos) + delta, n);
-//    return alph[newPos];
-//}
-//
-//std::wstring CaesarCipherW::DecryptWithAlphabet(const std::wstring& wtext,
-//    const std::wstring& low,
-//    const std::wstring& up) const {
-//    std::wstring out;
-//    out.reserve(wtext.size());
-//    for (wchar_t ch : wtext) {
-//        size_t pl = low.find(ch);
-//        size_t pu = up.find(ch);
-//        if (pl != std::wstring::npos)
-//            out.push_back(ShiftInAlphabet(low, ch, shift, false));
-//        else if (pu != std::wstring::npos)
-//            out.push_back(ShiftInAlphabet(up, ch, shift, false));
-//        else
-//            out.push_back(ch);
-//    }
-//    return out;
-//}
-//
-//std::wstring CaesarCipherW::DecryptW(const std::wstring& wtext) const {
-//    return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
-//}
-//
-//std::wstring CaesarCipherW::SmartDecryptW(const std::wstring& wtext) const {
-//    // Сначала проверим, содержит ли исходный текст русские символы
-//    if (wtext.find_first_of(RU_LOW + RU_UP) != std::wstring::npos) {
-//        return DecryptWithAlphabet(wtext, RU_LOW, RU_UP);
-//    }
-//
-//    // Сначала проверяем, содержит ли исходный текст немецкие специальные символы
-//    if (wtext.find_first_of(L"äöüßÄÖÜẞ") != std::wstring::npos) {
-//        std::wstring res_de = DecryptWithAlphabet(wtext, DE_LOW, DE_UP);
-//        // Дополнительная проверка: результат должен содержать немецкие символы
-//        if (res_de.find_first_of(L"äöüßÄÖÜẞ") != std::wstring::npos) {
-//            return res_de;
-//        }
-//    }
-//
-//    // Затем проверяем французские специальные символы
-//    if (wtext.find_first_of(L"àâæçéèêëîïôœûùÿÀÂÆÇÉÈÊËÎÏÔŒÛÙŸ") != std::wstring::npos) {
-//        std::wstring res_fr = DecryptWithAlphabet(wtext, FR_LOW, FR_UP);
-//        // Дополнительная проверка: результат должен содержать французские символы
-//        if (res_fr.find_first_of(L"àâæçéèêëîïôœûùÿÀÂÆÇÉÈÊËÎÏÔŒÛÙŸ") != std::wstring::npos) {
-//            return res_fr;
-//        }
-//    }
-//
-//    // Если нет специальных символов ни в исходном тексте, ни в результате
-//    // то используем английский алфавит по умолчанию
-//    return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
-//}
-//
-//std::wstring CaesarCipherW::EncryptW(const std::wstring& wtext) const {
-//    CaesarCipherW c(-shift);
-//    return c.SmartDecryptW(wtext);
-//}
-//
-//void CaesarCipherW::SetupDecryptionMachine(TuringMachineW& tm) const {
-//    tm.Reset();
-//    auto add = [&](const std::wstring& alph) {
-//        for (wchar_t c : alph) {
-//            wchar_t d = ShiftInAlphabet(alph, c, shift, false);
-//            tm.AddTransition("start", c, "decrypt", d, 1);
-//            tm.AddTransition("decrypt", c, "decrypt", d, 1);
-//        }
-//        };
-//    add(EN_LOW); add(EN_UP);
-//    add(RU_LOW); add(RU_UP);
-//    add(DE_LOW.substr(26)); add(DE_UP.substr(26));
-//    add(FR_LOW.substr(26)); add(FR_UP.substr(26));
-//
-//    tm.AddTransition("start", L' ', "decrypt", L' ', 1);
-//    tm.AddTransition("decrypt", L' ', "decrypt", L' ', 1);
-//    const std::wstring punct = L" .,;:!?-–—()\"'«»/\\@#%&";
-//    for (wchar_t p : punct) {
-//        tm.AddTransition("start", p, "decrypt", p, 1);
-//        tm.AddTransition("decrypt", p, "decrypt", p, 1);
-//    }
-//    tm.AddTransition("start", L'\0', "halt", L'\0', 0);
-//    tm.AddTransition("decrypt", L'\0', "halt", L'\0', 0);
-//}
-//
-//void CaesarCipherW::SetupEncryptionMachine(TuringMachineW& tm) const {
-//    tm.Reset();
-//    auto add = [&](const std::wstring& alph) {
-//        for (wchar_t c : alph) {
-//            wchar_t e = ShiftInAlphabet(alph, c, shift, true);
-//            tm.AddTransition("start", c, "encrypt", e, 1);
-//            tm.AddTransition("encrypt", c, "encrypt", e, 1);
-//        }
-//        };
-//    add(EN_LOW); add(EN_UP);
-//    add(RU_LOW); add(RU_UP);
-//    add(DE_LOW.substr(26)); add(DE_UP.substr(26));
-//    add(FR_LOW.substr(26)); add(FR_UP.substr(26));
-//
-//    tm.AddTransition("start", L' ', "encrypt", L' ', 1);
-//    tm.AddTransition("encrypt", L' ', "encrypt", L' ', 1);
-//    const std::wstring punct = L" .,;:!?-–—()\"'«»/\\@#%&";
-//    for (wchar_t p : punct) {
-//        tm.AddTransition("start", p, "encrypt", p, 1);
-//        tm.AddTransition("encrypt", p, "encrypt", p, 1);
-//    }
-//    tm.AddTransition("start", L'\0', "halt", L'\0', 0);
-//    tm.AddTransition("encrypt", L'\0', "halt", L'\0', 0);
-//}
