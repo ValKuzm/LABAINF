@@ -1,0 +1,20 @@
+﻿# Caesar Cipher Test Cases
+# Format: encrypted_text|shift|expected_language|decrypted_text
+
+# English tests
+KhoorZruog|3|ENGLISH|HelloWorld
+Qebnrfzhyoltk|5|ENGLISH|Lzwimauctjgof
+Xlmmrwmwxaqvjsykveh|4|ENGLISH|Thiinsistwmrfougrad
+
+# Russian tests
+Йнуфхцщшч|3|RUSSIAN|Жкрстуцхф
+Фхлзпцц|3|RUSSIAN|Стиемуу
+Чфырпфирф|3|RUSSIAN|Фсшнмсёнс
+
+# German tests
+Jcnnqkfcncv|2|GERMAN|Halloidalat
+XäöüßÄÖÜ|5|GERMAN|SvwyxVWY
+
+# French tests
+Dqplqwtogpv|2|FRENCH|Bonjourment
+Àâæçéèêëîïôœûùÿ|7|FRENCH|Tuvwxyzàâæçéèêî

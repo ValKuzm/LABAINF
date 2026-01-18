@@ -50,5 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="test_cases.txt" />
+    <Text Include="test.txt" />
   </ItemGroup>
 </Project>

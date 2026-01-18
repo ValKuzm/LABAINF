@@ -151,6 +151,7 @@
     <None Include="run.bat" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="test.txt" />
     <Text Include="test_cases.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

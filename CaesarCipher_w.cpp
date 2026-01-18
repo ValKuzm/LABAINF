@@ -160,143 +160,211 @@ std::map<std::wstring, double> CaesarCipherW::GetBigramFrequencies(const std::ws
 }
 
 // Определение языка
+//std::string CaesarCipherW::DetectLanguage(const std::wstring& text) const {
+//    // Подсчет символов для статистики
+//    int total_chars = 0;
+//    int basic_latin = 0;
+//    int cyrillic = 0;
+//    int german_special = 0;
+//    int french_special = 0;
+//    
+//    for (wchar_t ch : text) {
+//        if (std::iswalpha(ch)) {
+//            total_chars++;
+//            
+//            // Базовые латинские символы a-z, A-Z
+//            if ((ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z')) {
+//                basic_latin++;
+//            }
+//            // Кириллица
+//            else if ((ch >= L'а' && ch <= L'я') || (ch >= L'А' && ch <= L'Я') || 
+//                     ch == L'ё' || ch == L'Ё') {
+//                cyrillic++;
+//            }
+//            // Немецкие специальные символы
+//            else if (ch == L'ä' || ch == L'ö' || ch == L'ü' || ch == L'ß' ||
+//                     ch == L'Ä' || ch == L'Ö' || ch == L'Ü' || ch == L'ẞ') {
+//                german_special++;
+//            }
+//            // Французские специальные символы
+//            else if (ch == L'à' || ch == L'â' || ch == L'æ' || ch == L'ç' ||
+//                     ch == L'é' || ch == L'è' || ch == L'ê' || ch == L'ë' ||
+//                     ch == L'î' || ch == L'ï' || ch == L'ô' || ch == L'œ' ||
+//                     ch == L'û' || ch == L'ù' || ch == L'ÿ' || 
+//                     ch == L'À' || ch == L'Â' || ch == L'Æ' || ch == L'Ç' ||
+//                     ch == L'É' || ch == L'È' || ch == L'Ê' || ch == L'Ë' ||
+//                     ch == L'Î' || ch == L'Ï' || ch == L'Ô' || ch == L'Œ' ||
+//                     ch == L'Û' || ch == L'Ù' || ch == L'Ÿ') {
+//                french_special++;
+//            }
+//        }
+//    }
+//    
+//    // 1. Если есть специфические символы - определяем по ним
+//    if (cyrillic > 0) return "RUSSIAN";
+//    if (german_special > 0) return "GERMAN";
+//    if (french_special > 0) return "FRENCH";
+//    
+//    // 2. Если все символы - базовые латинские, это английский
+//    if (basic_latin == total_chars && total_chars > 0) {
+//        return "ENGLISH";
+//    }
+//    
+//    // 3. Для смешанных случаев используем частотный анализ, но только при достаточном количестве символов
+//    if (total_chars < 30) {
+//        // Мало символов - используем английский по умолчанию для латинских символов
+//        return "ENGLISH";
+//    }
+//    
+//    // 4. Частотный анализ для длинных текстов без специальных символов
+//    auto freqs = GetLetterFrequencies(text);
+//    
+//    // Создаем векторы для каждого языка
+//    std::vector<double> text_vector_en(26, 0.0);
+//    std::vector<double> text_vector_ru(33, 0.0);
+//    std::vector<double> text_vector_de(30, 0.0);
+//    std::vector<double> text_vector_fr(42, 0.0);
+//
+//    // Заполняем векторы
+//    for (const auto& pair : freqs) {
+//        wchar_t ch = pair.first;
+//
+//        if (EN_LOW.find(ch) != std::wstring::npos) {
+//            int idx = EN_LOW.find(ch);
+//            if (idx < 26) text_vector_en[idx] = pair.second;
+//        }
+//
+//        if (RU_LOW.find(ch) != std::wstring::npos) {
+//            int idx = RU_LOW.find(ch);
+//            if (idx < 33) text_vector_ru[idx] = pair.second;
+//        }
+//
+//        if (DE_LOW.find(ch) != std::wstring::npos) {
+//            int idx = DE_LOW.find(ch);
+//            if (idx < 30) text_vector_de[idx] = pair.second;
+//        }
+//
+//        if (FR_LOW.find(ch) != std::wstring::npos) {
+//            int idx = FR_LOW.find(ch);
+//            if (idx < 42) text_vector_fr[idx] = pair.second;
+//        }
+//    }
+//
+//    // Вычисляем косинусную близость
+//    auto cosine_similarity = [](const std::vector<double>& v1, const double* v2, int size) -> double {
+//        double dot = 0.0, norm1 = 0.0, norm2 = 0.0;
+//        for (int i = 0; i < size; ++i) {
+//            dot += v1[i] * v2[i];
+//            norm1 += v1[i] * v1[i];
+//            norm2 += v2[i] * v2[i];
+//        }
+//        if (norm1 == 0.0 || norm2 == 0.0) return 0.0;
+//        return dot / (std::sqrt(norm1) * std::sqrt(norm2));
+//        };
+//
+//    // Сравниваем с эталонами
+//    double score_en = cosine_similarity(text_vector_en, EN_FREQ, 26);
+//    double score_ru = cosine_similarity(text_vector_ru, RU_FREQ, 33);
+//    double score_de = cosine_similarity(text_vector_de, DE_FREQ, 30);
+//    double score_fr = cosine_similarity(text_vector_fr, FR_FREQ, 42);
+//
+//    // Выбираем лучший с порогом надежности
+//    std::vector<std::pair<double, std::string>> scores = {
+//        {score_en, "ENGLISH"},
+//        {score_ru, "RUSSIAN"},
+//        {score_de, "GERMAN"},
+//        {score_fr, "FRENCH"}
+//    };
+//
+//    std::sort(scores.begin(), scores.end(),
+//        [](const std::pair<double, std::string>& a, const std::pair<double, std::string>& b) {
+//            return a.first > b.first;
+//        });
+//
+//    // Если лучший результат имеет низкую уверенность (< 0.3), используем английский
+//    if (scores[0].first < 0.3) {
+//        return "ENGLISH";
+//    }
+//    
+//    // Если разница между лучшим и вторым небольшая (< 0.1), выбираем английский для текстов без спецсимволов
+//    if (scores.size() >= 2 && (scores[0].first - scores[1].first) < 0.1) {
+//        if (scores[0].second != "ENGLISH") {
+//            // Проверяем, были ли в тексте не-латинские символы
+//            if (basic_latin == total_chars) {
+//                return "ENGLISH";
+//            }
+//        }
+//    }
+//
+//    return scores[0].second;
+//}
+
 std::string CaesarCipherW::DetectLanguage(const std::wstring& text) const {
     // Подсчет символов для статистики
     int total_chars = 0;
-    int basic_latin = 0;
+    int basic_latin_only = 0; // ТОЛЬКО a-z без диакритик
     int cyrillic = 0;
     int german_special = 0;
     int french_special = 0;
-    
+
     for (wchar_t ch : text) {
         if (std::iswalpha(ch)) {
             total_chars++;
-            
-            // Базовые латинские символы a-z, A-Z
+
+            // ТОЛЬКО базовые латинские символы a-z, A-Z БЕЗ диакритик
             if ((ch >= L'a' && ch <= L'z') || (ch >= L'A' && ch <= L'Z')) {
-                basic_latin++;
+                basic_latin_only++;
             }
             // Кириллица
-            else if ((ch >= L'а' && ch <= L'я') || (ch >= L'А' && ch <= L'Я') || 
-                     ch == L'ё' || ch == L'Ё') {
+            else if ((ch >= L'а' && ch <= L'я') || (ch >= L'А' && ch <= L'Я') ||
+                ch == L'ё' || ch == L'Ё') {
                 cyrillic++;
             }
             // Немецкие специальные символы
-            else if (ch == L'ä' || ch == L'ö' || ch == L'ü' || ch == L'ß' ||
-                     ch == L'Ä' || ch == L'Ö' || ch == L'Ü' || ch == L'ẞ') {
-                german_special++;
+            else if (DE_LOW.find(ch) != std::wstring::npos ||
+                DE_UP.find(ch) != std::wstring::npos) {
+                // Проверяем, что это действительно немецкие символы
+                if (ch == L'ä' || ch == L'ö' || ch == L'ü' || ch == L'ß' ||
+                    ch == L'Ä' || ch == L'Ö' || ch == L'Ü' || ch == L'ẞ') {
+                    german_special++;
+                }
             }
             // Французские специальные символы
-            else if (ch == L'à' || ch == L'â' || ch == L'æ' || ch == L'ç' ||
-                     ch == L'é' || ch == L'è' || ch == L'ê' || ch == L'ë' ||
-                     ch == L'î' || ch == L'ï' || ch == L'ô' || ch == L'œ' ||
-                     ch == L'û' || ch == L'ù' || ch == L'ÿ' || 
-                     ch == L'À' || ch == L'Â' || ch == L'Æ' || ch == L'Ç' ||
-                     ch == L'É' || ch == L'È' || ch == L'Ê' || ch == L'Ë' ||
-                     ch == L'Î' || ch == L'Ï' || ch == L'Ô' || ch == L'Œ' ||
-                     ch == L'Û' || ch == L'Ù' || ch == L'Ÿ') {
-                french_special++;
+            else if (FR_LOW.find(ch) != std::wstring::npos ||
+                FR_UP.find(ch) != std::wstring::npos) {
+                // Проверяем, что это действительно французские символы
+                if (ch == L'à' || ch == L'â' || ch == L'æ' || ch == L'ç' ||
+                    ch == L'é' || ch == L'è' || ch == L'ê' || ch == L'ë' ||
+                    ch == L'î' || ch == L'ï' || ch == L'ô' || ch == L'œ' ||
+                    ch == L'û' || ch == L'ù' || ch == L'ÿ' ||
+                    ch == L'À' || ch == L'Â' || ch == L'Æ' || ch == L'Ç' ||
+                    ch == L'É' || ch == L'È' || ch == L'Ê' || ch == L'Ë' ||
+                    ch == L'Î' || ch == L'Ï' || ch == L'Ô' || ch == L'Œ' ||
+                    ch == L'Û' || ch == L'Ù' || ch == L'Ÿ') {
+                    french_special++;
+                }
             }
         }
     }
-    
+
+    std::wcout << L"[DEBUG] Language stats - Total: " << total_chars
+        << L", Basic Latin: " << basic_latin_only
+        << L", German special: " << german_special
+        << L", French special: " << french_special << L"\n";
+
     // 1. Если есть специфические символы - определяем по ним
     if (cyrillic > 0) return "RUSSIAN";
     if (german_special > 0) return "GERMAN";
     if (french_special > 0) return "FRENCH";
-    
-    // 2. Если все символы - базовые латинские, это английский
-    if (basic_latin == total_chars && total_chars > 0) {
+
+    // 2. Если ВСЕ символы - базовые латинские без диакритик, это английский
+    if (basic_latin_only == total_chars && total_chars > 0) {
         return "ENGLISH";
     }
-    
-    // 3. Для смешанных случаев используем частотный анализ, но только при достаточном количестве символов
-    if (total_chars < 30) {
-        // Мало символов - используем английский по умолчанию для латинских символов
-        return "ENGLISH";
-    }
-    
-    // 4. Частотный анализ для длинных текстов без специальных символов
-    auto freqs = GetLetterFrequencies(text);
-    
-    // Создаем векторы для каждого языка
-    std::vector<double> text_vector_en(26, 0.0);
-    std::vector<double> text_vector_ru(33, 0.0);
-    std::vector<double> text_vector_de(30, 0.0);
-    std::vector<double> text_vector_fr(42, 0.0);
 
-    // Заполняем векторы
-    for (const auto& pair : freqs) {
-        wchar_t ch = pair.first;
-
-        if (EN_LOW.find(ch) != std::wstring::npos) {
-            int idx = EN_LOW.find(ch);
-            if (idx < 26) text_vector_en[idx] = pair.second;
-        }
-
-        if (RU_LOW.find(ch) != std::wstring::npos) {
-            int idx = RU_LOW.find(ch);
-            if (idx < 33) text_vector_ru[idx] = pair.second;
-        }
-
-        if (DE_LOW.find(ch) != std::wstring::npos) {
-            int idx = DE_LOW.find(ch);
-            if (idx < 30) text_vector_de[idx] = pair.second;
-        }
-
-        if (FR_LOW.find(ch) != std::wstring::npos) {
-            int idx = FR_LOW.find(ch);
-            if (idx < 42) text_vector_fr[idx] = pair.second;
-        }
-    }
-
-    // Вычисляем косинусную близость
-    auto cosine_similarity = [](const std::vector<double>& v1, const double* v2, int size) -> double {
-        double dot = 0.0, norm1 = 0.0, norm2 = 0.0;
-        for (int i = 0; i < size; ++i) {
-            dot += v1[i] * v2[i];
-            norm1 += v1[i] * v1[i];
-            norm2 += v2[i] * v2[i];
-        }
-        if (norm1 == 0.0 || norm2 == 0.0) return 0.0;
-        return dot / (std::sqrt(norm1) * std::sqrt(norm2));
-        };
-
-    // Сравниваем с эталонами
-    double score_en = cosine_similarity(text_vector_en, EN_FREQ, 26);
-    double score_ru = cosine_similarity(text_vector_ru, RU_FREQ, 33);
-    double score_de = cosine_similarity(text_vector_de, DE_FREQ, 30);
-    double score_fr = cosine_similarity(text_vector_fr, FR_FREQ, 42);
-
-    // Выбираем лучший с порогом надежности
-    std::vector<std::pair<double, std::string>> scores = {
-        {score_en, "ENGLISH"},
-        {score_ru, "RUSSIAN"},
-        {score_de, "GERMAN"},
-        {score_fr, "FRENCH"}
-    };
-
-    std::sort(scores.begin(), scores.end(),
-        [](const std::pair<double, std::string>& a, const std::pair<double, std::string>& b) {
-            return a.first > b.first;
-        });
-
-    // Если лучший результат имеет низкую уверенность (< 0.3), используем английский
-    if (scores[0].first < 0.3) {
-        return "ENGLISH";
-    }
-    
-    // Если разница между лучшим и вторым небольшая (< 0.1), выбираем английский для текстов без спецсимволов
-    if (scores.size() >= 2 && (scores[0].first - scores[1].first) < 0.1) {
-        if (scores[0].second != "ENGLISH") {
-            // Проверяем, были ли в тексте не-латинские символы
-            if (basic_latin == total_chars) {
-                return "ENGLISH";
-            }
-        }
-    }
-
-    return scores[0].second;
+    // 3. Для остальных случаев используем английский по умолчанию
+    // (немецкие/французские тексты без диакритик встречаются редко)
+    return "ENGLISH";
 }
 
 // После существующих функций добавьте:
@@ -469,21 +537,31 @@ std::wstring CaesarCipherW::SmartDecryptW(const std::wstring& wtext) const {
         return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
     }
 
-    // Используем новую систему определения языка
+    // Определяем язык
     std::string lang = FinalLanguageDetection(wtext);
 
-    // Если язык содержит пометку о предположении, убираем её для выбора алфавита
-    if (lang.find("RUSSIAN") != std::string::npos) {
+    std::wcout << L"\n[DEBUG] Language detection result: "
+        << std::wstring(lang.begin(), lang.end()) << L"\n";
+
+    // Важно: проверяем СНАЧАЛА английский, потом немецкий
+    // потому что немецкий алфавит включает английский
+
+    // 1. Сначала проверяем однозначные признаки
+    bool has_russian = (wtext.find_first_of(RU_LOW + RU_UP) != std::wstring::npos);
+    bool has_german_special = (wtext.find_first_of(L"äöüßÄÖÜẞ") != std::wstring::npos);
+    bool has_french_special = (wtext.find_first_of(L"àâæçéèêëîïôœûùÿÀÂÆÇÉÈÊËÎÏÔŒÛÙŸ") != std::wstring::npos);
+
+    if (has_russian) {
         return DecryptWithAlphabet(wtext, RU_LOW, RU_UP);
     }
-    else if (lang.find("GERMAN") != std::string::npos) {
+    else if (has_german_special) {
         return DecryptWithAlphabet(wtext, DE_LOW, DE_UP);
     }
-    else if (lang.find("FRENCH") != std::string::npos) {
+    else if (has_french_special) {
         return DecryptWithAlphabet(wtext, FR_LOW, FR_UP);
     }
+    // 2. Если нет специальных символов - это английский
     else {
-        // Английский по умолчанию или если в строке есть ENGLISH
         return DecryptWithAlphabet(wtext, EN_LOW, EN_UP);
     }
 }
@@ -621,49 +699,34 @@ std::string wchar_to_label(wchar_t wc) {
 std::string wstring_to_utf8(const std::wstring& wstr) {
     if (wstr.empty()) return "";
 
-    std::string result;
+    // Используем стандартный конвертер
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    try {
+        return converter.to_bytes(wstr);
+    }
+    catch (const std::exception& e) {
+        // Fallback: ручная конвертация для UTF-16 в UTF-8
+        std::string result;
 
-    for (wchar_t wc : wstr) {
-        // Русские буквы (Unicode диапазон)
-        if (wc >= 0x0400 && wc <= 0x04FF) {
-            // Кириллица в UTF-8 (2 байта)
-            if (wc <= 0x07FF) {
+        for (wchar_t wc : wstr) {
+            if (wc < 0x80) {
+                // ASCII
+                result += static_cast<char>(wc);
+            }
+            else if (wc < 0x800) {
+                // 2-byte UTF-8
                 result += static_cast<char>(0xC0 | (wc >> 6));
                 result += static_cast<char>(0x80 | (wc & 0x3F));
             }
+            else if (wc < 0x10000) {
+                // 3-byte UTF-8 (для большинства символов)
+                result += static_cast<char>(0xE0 | (wc >> 12));
+                result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            }
         }
-        // ASCII символы
-        else if (wc < 128) {
-            result += static_cast<char>(wc);
-        }
-        // Специальные символы
-        else if (wc == L'é' || wc == L'É') result += "é";
-        else if (wc == L'è' || wc == L'È') result += "è";
-        else if (wc == L'ê' || wc == L'Ê') result += "ê";
-        else if (wc == L'ë' || wc == L'Ë') result += "ë";
-        else if (wc == L'à' || wc == L'À') result += "à";
-        else if (wc == L'â' || wc == L'Â') result += "â";
-        else if (wc == L'ç' || wc == L'Ç') result += "ç";
-        else if (wc == L'î' || wc == L'Î') result += "î";
-        else if (wc == L'ï' || wc == L'Ï') result += "ï";
-        else if (wc == L'ô' || wc == L'Ô') result += "ô";
-        else if (wc == L'ù' || wc == L'Ù') result += "ù";
-        else if (wc == L'û' || wc == L'Û') result += "û";
-        else if (wc == L'œ' || wc == L'Œ') result += "œ";
-        else if (wc == L'æ' || wc == L'Æ') result += "æ";
-        else if (wc == L'ä' || wc == L'Ä') result += "ä";
-        else if (wc == L'ö' || wc == L'Ö') result += "ö";
-        else if (wc == L'ü' || wc == L'Ü') result += "ü";
-        else if (wc == L'ß') result += "ß";
-        // Все остальное - показываем код
-        else {
-            char buf[16];
-            snprintf(buf, sizeof(buf), "[%d]", (int)wc);
-            result += buf;
-        }
+        return result;
     }
-
-    return result;
 }
 
 // Вспомогательная функция для экранирования HTML
@@ -1540,7 +1603,6 @@ void CaesarCipherW::CreateCompleteAnalysisHTML(const std::wstring& encrypted,
             if (!firstLetter) html << ",";
             firstLetter = false;
 
-            // ИСПОЛЬЗУЕМ ТОТ ЖЕ ID, ЧТО И В nodes!
             // Находим соответствующую вершину
             std::string nodeId = wchar_to_id(letter);
 

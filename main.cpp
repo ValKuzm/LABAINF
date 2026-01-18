@@ -11,6 +11,8 @@
 #include <sstream>
 #include "CaesarCipher_w.h"
 #include "GraphAnalyzer_w.h"
+#include <locale>
+#include <codecvt>
 
 // Настройка консоли
 static void SetupConsoleUTF16() {
@@ -25,66 +27,152 @@ void PrintHeader() {
     std::wcout << L"     AUTOMATED CAESAR CIPHER ANALYZER   \n";
     std::wcout << L"========================================\n\n";
 }
-
-// Функция для чтения тестов из файла
 void RunTestsFromFile(const std::string& filename) {
-    std::wifstream file(filename);
+    // Открываем файл как бинарный
+    std::ifstream file(filename, std::ios::binary);
     if (!file.is_open()) {
         std::wcout << L"Error: Cannot open file " << std::wstring(filename.begin(), filename.end()) << L"\n";
         return;
     }
 
+    // Читаем весь файл
+    std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
+
+    // Конвертируем UTF-8 в UTF-16
+    std::wstring wcontent;
+    int size = MultiByteToWideChar(CP_UTF8, 0, content.c_str(), (int)content.size(), NULL, 0);
+    if (size > 0) {
+        wcontent.resize(size);
+        MultiByteToWideChar(CP_UTF8, 0, content.c_str(), (int)content.size(), &wcontent[0], size);
+    }
+    else {
+        // Если не UTF-8, пробуем системную кодовую страницу
+        size = MultiByteToWideChar(CP_ACP, 0, content.c_str(), (int)content.size(), NULL, 0);
+        if (size > 0) {
+            wcontent.resize(size);
+            MultiByteToWideChar(CP_ACP, 0, content.c_str(), (int)content.size(), &wcontent[0], size);
+        }
+    }
+
+    std::wstringstream wss(wcontent);
     std::wstring line;
     int test_count = 0;
-    int passed_count = 0;
+    int passed_lang_count = 0;
+    int passed_decrypt_count = 0;
 
     std::wcout << L"\nRunning tests from file...\n";
     std::wcout << L"===========================\n";
 
-    while (std::getline(file, line)) {
+    while (std::getline(wss, line)) {
+        // Удаляем \r если есть
+        if (!line.empty() && line.back() == L'\r') {
+            line.pop_back();
+        }
+
         if (line.empty() || line[0] == L'#') continue;
 
-        std::wstringstream ss(line);
-        std::wstring text;
-        std::wstring shift_str;
-        std::wstring expected_lang;
+        // Разделяем строку
+        size_t pipe1 = line.find(L'|');
+        size_t pipe2 = line.find(L'|', pipe1 + 1);
+        size_t pipe3 = line.find(L'|', pipe2 + 1);
 
-        if (std::getline(ss, text, L'|') &&
-            std::getline(ss, shift_str, L'|') &&
-            std::getline(ss, expected_lang)) {
+        if (pipe1 == std::wstring::npos || pipe2 == std::wstring::npos || pipe3 == std::wstring::npos) {
+            std::wcout << L"WARNING: Invalid format in line: " << line << L"\n";
+            continue;
+        }
 
+        std::wstring text = line.substr(0, pipe1);
+        std::wstring shift_str = line.substr(pipe1 + 1, pipe2 - pipe1 - 1);
+        std::wstring expected_lang = line.substr(pipe2 + 1, pipe3 - pipe2 - 1);
+        std::wstring expected_decrypted = line.substr(pipe3 + 1);
+
+        // Удаляем пробелы
+        auto trim = [](std::wstring& s) {
+            size_t start = s.find_first_not_of(L" \t");
+            if (start == std::wstring::npos) {
+                s.clear();
+                return;
+            }
+            size_t end = s.find_last_not_of(L" \t");
+            s = s.substr(start, end - start + 1);
+            };
+
+        trim(text);
+        trim(shift_str);
+        trim(expected_lang);
+        trim(expected_decrypted);
+
+        try {
             int shift = std::stoi(shift_str);
             test_count++;
 
             CaesarCipherW cipher(shift);
             std::string detected_lang = cipher.DetectLanguage(text);
-            std::string expected(expected_lang.begin(), expected_lang.end());
+            std::string expected_lang_str(expected_lang.begin(), expected_lang.end());
+
+            std::wstring decrypted = cipher.SmartDecryptW(text);
 
             std::wcout << L"\nTest #" << test_count << L":\n";
-            std::wcout << L"Text: " << (text.length() > 30 ? text.substr(0, 30) + L"..." : text) << L"\n";
+            std::wcout << L"Text: " << text << L"\n";
             std::wcout << L"Shift: " << shift << L"\n";
             std::wcout << L"Expected language: " << expected_lang << L"\n";
             std::wcout << L"Detected language: " << std::wstring(detected_lang.begin(), detected_lang.end()) << L"\n";
+            std::wcout << L"Expected decrypted: " << expected_decrypted << L"\n";
+            std::wcout << L"Actual decrypted: " << decrypted << L"\n";
 
-            if (detected_lang == expected) {
-                std::wcout << L"✓ PASSED\n";
-                passed_count++;
+            // Проверяем детекцию языка
+            bool lang_correct = (detected_lang == expected_lang_str);
+            if (lang_correct) {
+                std::wcout << L"✓ Language PASSED\n";
+                passed_lang_count++;
             }
             else {
-                std::wcout << L"✗ FAILED\n";
+                std::wcout << L"✗ Language FAILED\n";
             }
 
-            // Дешифруем и показываем результат
-            std::wstring decrypted = cipher.SmartDecryptW(text);
-            std::wcout << L"Decrypted: " << (decrypted.length() > 50 ? decrypted.substr(0, 50) + L"..." : decrypted) << L"\n";
+            // Проверяем дешифровку
+            bool decrypt_correct = (decrypted == expected_decrypted);
+            if (decrypt_correct) {
+                std::wcout << L"✓ Decryption PASSED\n";
+                passed_decrypt_count++;
+            }
+            else {
+                std::wcout << L"✗ Decryption FAILED\n";
+            }
+
+            if (lang_correct && decrypt_correct) {
+                std::wcout << L"★ FULL TEST PASSED\n";
+            }
+        }
+        catch (const std::exception& e) {
+            std::wcout << L"ERROR processing test: " << e.what() << L"\n";
+        }
+        catch (...) {
+            std::wcout << L"ERROR processing test\n";
         }
     }
 
     std::wcout << L"\n===========================\n";
-    std::wcout << L"RESULTS: " << passed_count << L"/" << test_count << L" tests passed\n";
+    std::wcout << L"SUMMARY:\n";
+    std::wcout << L"Total tests: " << test_count << L"\n";
+    std::wcout << L"Language detection passed: " << passed_lang_count << L"/" << test_count << L"\n";
+    std::wcout << L"Decryption passed: " << passed_decrypt_count << L"/" << test_count << L"\n";
+
     if (test_count > 0) {
-        double percentage = (passed_count * 100.0) / test_count;
-        std::wcout << L"Success rate: " << std::fixed << std::setprecision(1) << percentage << L"%\n";
+        double lang_percentage = (passed_lang_count * 100.0) / test_count;
+        double decrypt_percentage = (passed_decrypt_count * 100.0) / test_count;
+
+        std::wcout << L"\nSuccess rates:\n";
+        std::wcout << L"Language detection: " << std::fixed << std::setprecision(1) << lang_percentage << L"%\n";
+        std::wcout << L"Decryption: " << std::fixed << std::setprecision(1) << decrypt_percentage << L"%\n";
+
+        int full_passed = 0;
+        for (int i = 0; i < test_count; i++) {
+            // Здесь нужно отслеживать, какие тесты прошли полностью
+            // Для простоты можно считать, что тест прошел полностью, если прошли обе проверки
+            // В реальном коде нужно сохранять результаты каждого теста
+        }
     }
 }
 
